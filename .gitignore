@@ -1,0 +1,21 @@
+# build
+target/
+*.class
+*.war
+
+# IDE
+.idea/
+*.iml
+
+# local config / secrets
+db.properties
+src/main/resources/common/db.properties
+
+# runtime
+logs/
+*.log
+upload/
+
+# OS
+.DS_Store
+Thumbs.db
