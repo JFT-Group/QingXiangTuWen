@@ -1,0 +1,503 @@
+/* ============================================================
+   轻享图文 · 浅色设计令牌（UIUX-小红书）
+   媒体 16 / 弹层 20 / 胶囊 999；卡片无边框、无阴影
+   ============================================================ */
+:root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --fill: rgba(0, 0, 0, 0.03);
+    --fill-strong: rgba(0, 0, 0, 0.06);
+    --border: rgba(0, 0, 0, 0.08);
+    --fg: #333333;
+    --fg-dim: rgba(51, 51, 51, 0.6);
+    --fg-mute: rgba(51, 51, 51, 0.3);
+    --brand: #ff2442;
+    --brand-strong: #ff2e4d;
+    --danger: #dc2626;
+    --success: #15803d;
+    --radius-media: 16px;
+    --radius-modal: 20px;
+    --radius-pill: 999px;
+    --motion-fast: 0.2s;
+    --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --font: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei",
+            "Helvetica Neue", Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--brand);
+}
+
+button,
+input {
+    font: inherit;
+    color: inherit;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ---------------- 品牌 / 按钮 ---------------- */
+.brand {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+}
+
+.brand span {
+    color: var(--brand);
+}
+
+.brand:hover {
+    color: var(--fg);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 24px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--motion-fast) var(--ease-out),
+                color var(--motion-fast) var(--ease-out),
+                border-color var(--motion-fast) var(--ease-out);
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+}
+
+.btn-primary {
+    background: var(--brand-strong);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: var(--brand);
+    color: #fff;
+}
+
+.btn-ghost {
+    height: 36px;
+    padding: 0 16px;
+    color: var(--fg-dim);
+    font-size: 14px;
+}
+
+.btn-ghost:hover {
+    background: var(--fill);
+    color: var(--fg);
+}
+
+.btn-block {
+    width: 100%;
+}
+
+/* ---------------- 登录 / 注册 ---------------- */
+.auth-body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+}
+
+.auth-shell {
+    width: 100%;
+    max-width: 400px;
+}
+
+.auth-shell .brand {
+    margin-bottom: 40px;
+}
+
+.auth-shell h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.auth-sub {
+    margin: 8px 0 28px;
+    color: var(--fg-dim);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.field > span {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fg-dim);
+}
+
+.field input {
+    height: 46px;
+    padding: 0 16px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: var(--fill);
+    font-size: 15px;
+    outline: none;
+    transition: background-color var(--motion-fast) var(--ease-out),
+                border-color var(--motion-fast) var(--ease-out);
+}
+
+.field input::placeholder {
+    color: var(--fg-mute);
+}
+
+.field input:focus {
+    background: #fff;
+    border-color: rgba(51, 51, 51, 0.2);
+}
+
+.auth-form .btn {
+    margin-top: 6px;
+}
+
+.alert {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #fff5f5;
+    color: #b91c1c;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.notice {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #f0fdf4;
+    color: var(--success);
+    font-size: 14px;
+}
+
+.auth-foot {
+    margin: 24px 0 0;
+    color: var(--fg-dim);
+    font-size: 14px;
+    text-align: center;
+}
+
+.auth-foot a {
+    color: var(--brand);
+    font-weight: 500;
+}
+
+/* ---------------- 顶栏 ---------------- */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+    padding: 0 24px;
+    background: var(--surface);
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.who {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+    color: var(--fg-dim);
+}
+
+.inline-form {
+    margin: 0;
+    display: inline-flex;
+}
+
+/* ---------------- 账号中心 ---------------- */
+.account {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+}
+
+.profile {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 8px 0 28px;
+}
+
+.avatar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--fill);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--fg);
+    user-select: none;
+}
+
+.profile-main {
+    min-width: 0;
+    padding-top: 4px;
+}
+
+.profile-main h1 {
+    margin: 0;
+    font-size: 26px;
+    line-height: 1.3;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.handle {
+    margin: 4px 0 10px;
+    font-size: 14px;
+    color: var(--fg-mute);
+}
+
+.bio {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--fg-dim);
+}
+
+.role-chip {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: var(--radius-pill);
+    background: var(--fill);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fg-dim);
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.stat {
+    padding: 18px 16px;
+    border-radius: var(--radius-media);
+    background: var(--fill);
+}
+
+.stat strong {
+    display: block;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+}
+
+.stat span {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--fg-dim);
+}
+
+.panel {
+    margin-top: 32px;
+}
+
+.panel h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.panel .muted {
+    margin: 6px 0 16px;
+    font-size: 13px;
+    color: var(--fg-dim);
+}
+
+.perm-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.perm-list li {
+    padding: 7px 12px;
+    border-radius: var(--radius-pill);
+    background: var(--fill);
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: 12px;
+    color: var(--fg);
+}
+
+.perm-list li.empty {
+    font-family: var(--font);
+    color: var(--fg-dim);
+}
+
+/* ---------------- 错误页 ---------------- */
+.error-body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    text-align: center;
+}
+
+.error-box {
+    max-width: 420px;
+}
+
+.error-code {
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--brand);
+    letter-spacing: -0.03em;
+}
+
+.error-box h1 {
+    margin: 18px 0 8px;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.error-box p {
+    margin: 0 0 24px;
+    color: var(--fg-dim);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* ---------------- 响应式 ---------------- */
+@media (max-width: 560px) {
+    .auth-body {
+        align-items: flex-start;
+        padding-top: 56px;
+    }
+
+    .auth-shell h1 {
+        font-size: 26px;
+    }
+
+    .topbar {
+        padding: 0 16px;
+    }
+
+    .account {
+        padding: 24px 16px 64px;
+    }
+
+    .profile {
+        gap: 16px;
+    }
+
+    .avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+    }
+
+    .profile-main h1 {
+        font-size: 22px;
+    }
+
+    .stats {
+        gap: 8px;
+    }
+
+    .stat {
+        padding: 14px 12px;
+    }
+
+    .stat strong {
+        font-size: 20px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+    }
+}

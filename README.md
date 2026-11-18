@@ -50,13 +50,38 @@ JDK 17 + Spring 5.3.31 + Spring MVC + MyBatis 3.5.15 + MyBatis-Plus 3.5.5 + MySQ
 
 ## 快速开始
 
-代码骨架落地后补：
-
 ```bash
 mvn -B clean test
 mvn -B -Prun package cargo:run
 # http://127.0.0.1:18080/qingxiang/
 ```
+
+首次运行前：执行 `sql/01_core.sql`、`sql/04_seed.sql`；复制
+`src/main/resources/common/db.properties.example` 为 `db.properties` 并填本机 MySQL 口令。
+
+### 用 IDEA 运行（组员机器）
+
+本项目是标准 Maven war，IDEA 的 Tomcat 只是另一种启动方式。**不要和本机 `cargo:run` 同时开**，两者抢 18080 和同一个 context。
+
+前置：JDK 17、**Tomcat 9.0.x**（不能用 10/11，jakarta 不兼容）、MySQL 已初始化。
+
+**IDEA Ultimate（有 Tomcat 集成）**
+
+1. 打开项目根目录（`pom.xml`），等 Maven 导入完成。
+2. `Project Structure` → SDK 选 JDK 17，Language level 17。
+3. `Run` → `Edit Configurations` → `+` → `Tomcat Server` → `Local`。
+4. `Application server` 指向 Tomcat 9.0.86 的安装目录；HTTP port 用 `18080`。
+5. `Deployment` → `+` → `Artifact` → `qingxiang:war exploded`；Application context 填 `/qingxiang`。
+6. 启动后访问 `http://127.0.0.1:18080/qingxiang/`。
+
+没有 `qingxiang:war exploded` 时：`Project Structure` → `Artifacts` → `+` → `Web Application: Exploded` → `From Modules` → 选 `qingxiang`。
+
+**IDEA Community（没有 Tomcat 集成）**
+
+- 推荐直接用 `mvn -Prun cargo:run`（与本机脚本同一套），IDEA 只负责写代码；或
+- 装 `Smart Tomcat` 插件：Tomcat home 选 9.0.86，Context path `/qingxiang`，部署模块选 `qingxiang`。
+
+端口可以改成 8080，但文档、截图、curl 统一按 18080；JSP 页面同源访问不受端口影响。
 
 ## 课程约束
 
