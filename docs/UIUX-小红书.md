@@ -16,6 +16,7 @@
 - **形状**：媒体圆角 16px，弹层圆角 20px，按钮/搜索/标签胶囊 999px；卡片**无边框、无阴影**。
 - **布局**：顶栏 72px；桌面左栏 219px；信息流桌面 5 列 / 平板 3 列 / 手机 2 列；卡片封面 3:4。
 - **氛围**：白、轻、内容优先、红色点睛、动效克制；不是玻璃拟态，也不是暗色科技风。
+- **动效**：静态优先；全站只允许 6 个受控 GSAP 动效点（§8.1），无 3D/Three.js、无 CDN。
 
 ---
 
@@ -25,7 +26,7 @@
 |---|---|---|
 | 信息密度 | 7/10 | 5 列瀑布流，屏幕内 10+ 卡片；但留白足够，不拥挤 |
 | 布局变异 | 6/10 | 卡片高度随封面变化，列与列错落；整体仍对齐 |
-| 动效强度 | 2/10 | 以颜色/背景过渡为主，卡片不抬升、不缩放 |
+| 动效强度 | 2/10 | 静态骨架为主；只在详情/入场/数字/进度/骨架/排序 6 处做受控动效（§8.1），卡片不抬升、不缩放 |
 | 类型 | 消费级内容社区 / 生活方式信息流 | 图片优先、作者与点赞信息极简 |
 | 情绪词 | 轻盈、日常、温暖、内容优先、克制 | 白底、红点、圆角图片、弱化 chrome |
 
@@ -227,10 +228,51 @@ font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei",
 
 ## 8. 动效
 
-- **动效强度低**：页面没有入场动画、没有滚动视差、没有卡片抬升。
-- 过渡以 `background-color / color / opacity` 为主，约 0.2s；弹层出现/消失用淡入 + 轻微位移即可。
-- 不做 spring/bounce；不做 3D hover；不做大面积渐变流动。
-- 轻享图文可保留 0.15–0.2s 的按钮/卡片颜色过渡；列表滚动不做动画。
+基线：**静态优先**。不执行 JS 时页面完整可读；动画只做增强，不承载信息。
+
+### 8.1 Gasp-Design 动效层（唯一允许清单）
+
+从 `Offblink/Gasp-Design` 只借动作模式，不借深色皮肤、渐变和 3D。全站只允许以下 6 个动效点：
+
+| 编号 | 动效 | 落点 | 实现 | 参数 |
+|---|---|---|---|---|
+| M1 | 卡片 → 详情 FLIP | 信息流打开详情弹层 | `Flip.getState(card)` → 弹层，`Flip.from` | 0.32s `power3.out` |
+| M2 | 卡片入场 | 首页 / 关注流首屏 | `clip-path: inset(0 0 18% 0)` → `inset(0)`，只跑一次 | 0.45s `power2.out`，stagger 0.05 |
+| M3 | 数字递增 | 作者主页粉丝/关注、后台概览 | tween 数字对象，`tabular-nums` | 1.1s `power2.out` |
+| M4 | 阅读进度 | 详情页顶栏下 2px 进度条 | `transform: scaleX(progress)`，不触发重排 | 跟滚动，无缓动 |
+| M5 | 骨架扫光 | 搜索 / 通知 / 列表加载态 | 浅灰扫光，仅加载时出现 | 1.2s `linear` 循环 |
+| M6 | 拖拽排序 | 后台分类管理 | Draggable + Flip 换序，落库 `sort` | 0.2s `power2.out` |
+
+**约束**：
+
+- 只动 `transform / opacity / clip-path`；不 tween `width/height/top/left`（FLIP 除外）。
+- 时长三档：交互 0.2s、弹层 0.32s、入场 0.45s。不用 bounce；唯一例外是 FLIP 回弹 `back.out(1.2)`。
+- `prefers-reduced-motion: reduce` 下全部关闭，直接落到最终态。
+- 无 JS / 库加载失败：内容默认可见。脚本先给 `<html>` 加 `.js-motion`，再由 CSS 设初始态；不允许“先隐藏再等 JS”。
+- 详情弹层必须有整页 `/articles/{id}` 回退；FLIP 只是增强。
+- 分页 / 筛选刷新只重放入场，不做列表位移动画。
+- **禁止**：Three.js / 点云 / 着色器 / 玻璃折射 / 自定义光标 / 卡片 hover 抬升缩放 / 全屏横向滚动 / 自动播放视频背景。
+- 依赖必须本地 vendor：`static/vendor/{gsap,ScrollTrigger,Flip,Draggable}.min.js`；禁止 CDN。
+
+**Gasp 组件取舍**：
+
+| 采用 | 改造点 |
+|---|---|
+| `elastic-gallery` | 只留 FLIP 展开/收起；删 hover 1.15 缩放与渐变背景 |
+| `scroll-reveal` | clip-path 改为自下而上 18%，轻量、只跑一次 |
+| `number-counter` | 去渐变文字、去超大字号，改 `#333` + `tabular-nums` |
+| `scroll-progress-ring` | 环形改为顶栏下 2px 进度条 |
+| `shimmer-cards` | 只借扫光，改浅灰，用作骨架屏 |
+| `flip-drag-reorder` | 只用于后台分类排序，补键盘上下移动 |
+
+| 不采用 | 原因 |
+|---|---|
+| 3D/Three.js 系（pointcloud、shader、virtual-gallery、scroll-tour、disassembly） | M1 无构建、无体积预算；破坏内容优先 |
+| 深色系（mouse-spotlight、day-night-cycle、light-trail、gooey、glass-refraction） | 与浅色单主题冲突 |
+| `tilt-card-3d`、`card-stack-draggable` | 卡片抬升/3D hover，违反反模式 |
+| `cursor-magnetic` | 可用性与可访问性倒退 |
+| `horizontal-scroll-gallery` | 信息流应纵向；原实现依赖 GSAP 私有属性，不可照抄 |
+| `liquid-button`、`split-text` | gooey/逐字 3D 与克制基线冲突；标题最多做 0.3s 纯位移 |
 
 ---
 
@@ -246,8 +288,8 @@ font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei",
 
 ## 10. 反模式（不要做）
 
-1. 不给信息流卡片加外框、阴影、悬浮抬升。
-2. 不用渐变、玻璃拟态、彩色光晕。
+1. 不给信息流卡片加外框、阴影、悬浮抬升；§8.1 的 FLIP 与入场是唯一例外。
+2. 不用渐变、玻璃拟态、彩色光晕；Gasp 组件的深色渐变皮肤一律不搬。
 3. 不用深色底 + 霓虹色；本次采样是浅色单主题。
 4. 不做大 Hero/Banner 占据首屏；内容直接开始。
 5. 不用大圆角 32px+ 的“软糖”卡片；媒体 16、弹层 20 足够。
@@ -256,6 +298,8 @@ font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei",
 8. 不把红色铺满按钮区/导航区；红色是点睛，不是背景。
 9. 不用卡片内再套卡片；层级靠图片、字号、留白。
 10. 不复制小红书 Logo/品牌资产；只借用设计语言。
+11. 不引入 Three.js/点云/着色器，也不在信息流做 3D hover。
+12. 不通过 CDN 引动画库；答辩环境可能断网。
 
 ---
 
@@ -279,6 +323,10 @@ font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei",
   --radius-pill: 999px;
   --shadow-modal: 0 8px 64px rgba(0, 0, 0, 0.04),
                   0 1px 4px rgba(0, 0, 0, 0.02);
+  --motion-fast: 0.2s;   /* 按钮、颜色、hover */
+  --motion-modal: 0.32s; /* 详情 FLIP */
+  --motion-enter: 0.45s; /* 卡片入场 */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
   --font: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei",
           "Helvetica Neue", Arial, sans-serif;
 }
@@ -296,6 +344,8 @@ font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei",
 | 后台审核/分类/用户/日志 | 无直接对应 | 保留小红书字体/间距/红色 CTA；表格用细线，不用卡片阴影 |
 | 通知中心 | 无直接对应 | 白底列表、未读红点、12/14 字号；不做彩色卡片 |
 
+动效挂载：首页/关注流 M2；详情 M1 + M4；作者主页 M3；后台分类 M6；搜索/通知加载 M5。
+
 ### 11.3 布局落地
 
 - 顶栏 72；桌面左栏 219；内容区左边距 235；内边距 32；移动端隐藏左栏，用底部导航。
@@ -303,6 +353,7 @@ font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei",
 - 详情：桌面用 1066×836 弹层；移动端全屏；左封面 3:4，右栏 439；底部操作栏固定。
 - 按钮/搜索/频道一律 40 高、胶囊；主按钮红、关注描边红。
 - 不做深色主题（M1）；深色 M2 再单独提取，不把浅色反转。
+- 动效按 §8.1 挂载；页面用 `data-motion="feed|detail|stats|admin"` 控制，不全局初始化。
 
 ### 11.4 与自动封面的结合
 
@@ -359,3 +410,19 @@ font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei",
 - 未观察深色模式；M1 按浅色单主题。
 - 评论区的深层回复、长文展开、图片查看器等未完整采样；轻享图文按“一级评论 + 一层回复”简化。
 - 小红书的瀑布流是绝对定位 JS 实现；轻享图文的自动封面固定 3:4，可用 CSS Grid/Columns 达到近似效果，避免不必要的 JS。
+
+---
+
+## 15. 动效资产
+
+| 文件 | 版本 | 用途 |
+|---|---|---|
+| `static/vendor/gsap.min.js` | 3.12.7 | 核心 |
+| `static/vendor/ScrollTrigger.min.js` | 3.12.7 | M2 卡片入场、M4 阅读进度 |
+| `static/vendor/Flip.min.js` | 3.12.7 | M1 详情弹层、M6 分类排序 |
+| `static/vendor/Draggable.min.js` | 3.12.7 | M6 分类拖拽 |
+
+- 来源：npm 包 `gsap@3.12.7` 的 `dist/`；保留文件头 license；说明见 `static/vendor/README.md`。
+- 加载顺序：`gsap` → `ScrollTrigger` → `Flip` → `Draggable` → 页面脚本，全部 `defer`。
+- 按页面按需加载：信息流只需 `gsap + ScrollTrigger`；后台分类才加载 `Draggable + Flip`。
+- 不使用 CDN。升级时四个文件一起换，并回归 §8.1 六个动效点。
