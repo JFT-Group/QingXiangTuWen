@@ -3,7 +3,7 @@ package com.qingxiang.util;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 /**
- * 口令散列：BCrypt cost 10。BCrypt 自带随机盐，数据库 salt 列只作兼容位。
+ * 密码散列：BCrypt cost 10。BCrypt 自带随机盐，数据库 salt 列只作兼容位。
  */
 public final class PasswordUtil {
 

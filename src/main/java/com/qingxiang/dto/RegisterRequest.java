@@ -13,8 +13,8 @@ public class RegisterRequest {
     @Pattern(regexp = "^[A-Za-z0-9_]{4,50}$", message = "用户名需为 4–50 位字母、数字或下划线")
     private String username;
 
-    @NotBlank(message = "请输入口令")
-    @Size(min = 6, max = 72, message = "口令长度需为 6–72 位")
+    @NotBlank(message = "请输入密码")
+    @Size(min = 6, max = 72, message = "密码长度需为 6–72 位")
     private String password;
 
     @NotBlank(message = "请输入昵称")

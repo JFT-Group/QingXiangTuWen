@@ -16,9 +16,6 @@
     <h1>登录</h1>
     <p class="auth-sub">用你的账号进入轻享图文。</p>
 
-    <c:if test="${param.registered == '1'}">
-        <p class="notice" role="status">注册成功，请登录。</p>
-    </c:if>
     <c:if test="${not empty error}">
         <p class="alert" role="alert"><c:out value="${error}"/></p>
     </c:if>
@@ -30,7 +27,7 @@
                    autocomplete="username" placeholder="4–50 位字母、数字或下划线" required autofocus>
         </label>
         <label class="field">
-            <span>口令</span>
+            <span>密码</span>
             <input type="password" name="password" autocomplete="current-password"
                    placeholder="至少 6 位" required>
         </label>

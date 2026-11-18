@@ -57,7 +57,7 @@ mvn -B -Prun package cargo:run
 ```
 
 首次运行前：执行 `sql/01_core.sql`、`sql/04_seed.sql`；复制
-`src/main/resources/common/db.properties.example` 为 `db.properties` 并填本机 MySQL 口令。
+`src/main/resources/common/db.properties.example` 为 `db.properties` 并填本机 MySQL 密码。
 
 ### 用 IDEA 运行（组员机器）
 

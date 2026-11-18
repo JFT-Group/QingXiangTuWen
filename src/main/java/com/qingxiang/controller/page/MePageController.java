@@ -4,6 +4,7 @@ import com.qingxiang.dto.LoginUser;
 import com.qingxiang.service.AuthService;
 import com.qingxiang.util.CsrfUtil;
 import com.qingxiang.util.CurrentUser;
+import com.qingxiang.util.PermissionCatalog;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,7 +27,9 @@ public class MePageController {
     public String me(HttpServletRequest request, Model model) {
         LoginUser loginUser = CurrentUser.get();
         String csrfToken = CsrfUtil.ensure(request.getSession(true));
-        model.addAttribute("account", authService.profile(loginUser, csrfToken));
+        var account = authService.profile(loginUser, csrfToken);
+        model.addAttribute("account", account);
+        model.addAttribute("capabilities", PermissionCatalog.describe(account.getPermissions()));
         return "me";
     }
 }

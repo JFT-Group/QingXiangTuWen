@@ -106,7 +106,7 @@
             <version>${jsqlparser.version}</version>
         </dependency>
 
-        <!-- 口令：BCrypt（自带随机盐） -->
+        <!-- 密码：BCrypt（自带随机盐） -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>

@@ -65,6 +65,7 @@ public class AuthPageController {
     @PostMapping("/register")
     public String register(@Valid @ModelAttribute("form") RegisterRequest form,
                            BindingResult binding,
+                           HttpServletRequest request,
                            Model model) {
         if (binding.hasErrors()) {
             var error = binding.getFieldError();
@@ -73,7 +74,14 @@ public class AuthPageController {
         }
         try {
             authService.register(form);
-            return "redirect:/login?registered=1";
+
+            // 注册成功直接建立会话，不再让用户回登录页重输一次
+            LoginRequest loginRequest = new LoginRequest();
+            loginRequest.setUsername(form.getUsername());
+            loginRequest.setPassword(form.getPassword());
+            LoginResult result = authService.login(loginRequest);
+            SessionUtil.start(request, result.loginUser());
+            return "redirect:/me";
         } catch (BusinessException e) {
             model.addAttribute("error", e.getMessage());
             return "register";

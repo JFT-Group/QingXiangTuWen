@@ -32,7 +32,7 @@
                    autocomplete="nickname" placeholder="展示给其他读者" required>
         </label>
         <label class="field">
-            <span>口令</span>
+            <span>密码</span>
             <input type="password" name="password" autocomplete="new-password"
                    placeholder="6–72 位" required>
         </label>

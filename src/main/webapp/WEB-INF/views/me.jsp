@@ -53,16 +53,19 @@
         </div>
     </section>
 
-    <section class="panel" aria-labelledby="perm-title">
-        <h2 id="perm-title">当前权限</h2>
-        <p class="muted">权限码来自角色，后端切面按接口校验；前端隐藏按钮只是体验。</p>
-        <ul class="perm-list">
-            <c:forEach var="code" items="${account.permissions}">
-                <li>${fn:escapeXml(code)}</li>
+    <section class="panel" aria-labelledby="cap-title">
+        <h2 id="cap-title">你可以做什么</h2>
+        <p class="muted">当前身份：<c:out value="${user.roleName}"/>。所有登录用户都可以浏览、点赞、收藏、评论和关注。</p>
+        <ul class="cap-grid">
+            <c:forEach var="cap" items="${capabilities}">
+                <li class="cap-card">
+                    <span class="cap-mark" aria-hidden="true">✓</span>
+                    <div>
+                        <strong><c:out value="${cap.title}"/></strong>
+                        <p><c:out value="${cap.description}"/></p>
+                    </div>
+                </li>
             </c:forEach>
-            <c:if test="${empty account.permissions}">
-                <li class="empty">阅读权限，无需管理权限码</li>
-            </c:if>
         </ul>
     </section>
 </main>

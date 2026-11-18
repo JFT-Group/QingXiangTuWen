@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.util.Set;
 
 /**
- * 会话里的登录态：只放展示与鉴权必需字段，不放口令。
+ * 会话里的登录态：只放展示与鉴权必需字段，不放密码。
  */
 @Getter
 public class LoginUser implements Serializable {

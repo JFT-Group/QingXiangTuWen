@@ -24,7 +24,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * 注册与登录：口令只以 BCrypt 形态落库；登录结果由控制器写入会话。
+ * 注册与登录：密码只以 BCrypt 形态落库；登录结果由控制器写入会话。
  */
 @Service
 public class AuthService {
@@ -79,12 +79,12 @@ public class AuthService {
         return vo;
     }
 
-    /** 校验口令与账号状态，返回会话所需的登录态。 */
+    /** 校验密码与账号状态，返回会话所需的登录态。 */
     public LoginResult login(LoginRequest request) {
         String username = request.getUsername() == null ? "" : request.getUsername().trim();
         SysUser user = userService.findByUsername(username);
         if (user == null || !PasswordUtil.matches(request.getPassword(), user.getPassword())) {
-            throw new BusinessException(401, "用户名或口令不正确");
+            throw new BusinessException(401, "用户名或密码不正确");
         }
         if (!Objects.equals(user.getStatus(), 1)) {
             throw new BusinessException(403, "账号已停用，请联系审核者");
