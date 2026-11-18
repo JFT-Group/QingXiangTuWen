@@ -36,6 +36,7 @@
 ## 仓库协作
 
 - 远端：<https://github.com/JFT-Group/QingXiangTuWen>
+- 组员上手教程（clone / push / PR，不需要 gh CLI）：[Git 协作图](docs/guide/git-clone-push.png)
 - 集成分支：`main`
 - 个人分支：`feat/a-*`、`feat/b-*`、`feat/c-*`
 - 合并前：`git pull --rebase origin main`；禁止 force push `main`
