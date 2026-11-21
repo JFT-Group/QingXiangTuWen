@@ -562,11 +562,16 @@ input {
     place-items: center;
     width: 28px;
     height: 28px;
-    border: 2px solid #fff;
+    border: 1px solid var(--border);
     border-radius: 50%;
-    background: var(--fg);
-    color: #fff;
+    background: #fff;
+    color: var(--fg-dim);
     cursor: pointer;
+}
+
+.me-avatar-edit:hover {
+    background: var(--fill);
+    color: var(--fg);
 }
 
 .me-avatar-edit .icon {
