@@ -2,6 +2,7 @@ package com.qingxiang.config;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.qingxiang.aspect.permission.PermissionAspect;
+import com.qingxiang.interceptor.ApiWriteAuthInterceptor;
 import com.qingxiang.interceptor.CsrfInterceptor;
 import com.qingxiang.interceptor.LoginInterceptor;
 import com.qingxiang.service.UserService;
@@ -57,6 +58,12 @@ public class SpringMvcConfig implements WebMvcConfigurer {
                         "/api/v1/categories/**",
                         "/api/v1/files/**");
 
+        registry.addInterceptor(apiWriteAuthInterceptor())
+                .addPathPatterns("/api/**")
+                .excludePathPatterns(
+                        "/api/v1/auth/login",
+                        "/api/v1/auth/register");
+
         registry.addInterceptor(csrfInterceptor())
                 .addPathPatterns("/**")
                 .excludePathPatterns(
@@ -111,6 +118,11 @@ public class SpringMvcConfig implements WebMvcConfigurer {
     @Bean
     public CsrfInterceptor csrfInterceptor() {
         return new CsrfInterceptor();
+    }
+
+    @Bean
+    public ApiWriteAuthInterceptor apiWriteAuthInterceptor() {
+        return new ApiWriteAuthInterceptor();
     }
 
     /** 权限切面切 Controller，必须注册在子容器；放父容器会静默失效。 */
