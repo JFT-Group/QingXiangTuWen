@@ -1,117 +1,194 @@
-> 审计对象：`feat/b-article` @ `28a80f6`（修复提交 `1c52d5e` 已合入 `main` 并推送）
-> 本地部署：`http://127.0.0.1:18081/qingxiang/`（18080 被 MonaHub 占用，未杀进程）
-> 验证：`mvn clean test` 76/76 通过；浏览器与 curl 均已跑通发布/多媒体/CSRF/越权/路径穿越
+> 状态：`feat/b-article` 已合入 `main`（含 SQL 修复与 A 的账号中心）。**不需要再合并这个分支**。
+> 本 issue 只跟踪 B 的剩余工作。B 从 §0 开始按顺序做；合并流程在 §4，按命令复制即可。
+> 当前 `main` 通过 `mvn clean test`（79/79）；A 本机已跑通发布、多媒体、审核前状态机与账号中心。
 
-## 1. 结论
+## 0. B 现在要做什么（先看这里）
 
-- 「文章发布 + 多媒体」切片可用：信息流、详情、编辑器、图片/视频上传、草稿、提交/撤回、删除、自动封面。
-- **审核台与分类管理整块未实现**，但导航已挂入口，M1「发布 → 审核 → 上架」主闭环目前无法演示。
-- 因此**本分支暂不建议合入 `main`**；先完成 §5 的 B 侧阻塞项。
+一句话：**发布/多媒体已经做完，剩下「审核台 + 分类管理」两块功能，以及 4 个收尾项。**
 
-## 2. P0（阻塞合并）
+按顺序：
 
-| # | 问题 | 证据 | 归属 |
-|---|---|---|---|
-| P0-1 | 审核 / 分类管理 API 与页面缺失 | `/api/v1/reviews`、`/api/v1/categories/tree`、`/admin/reviews`、`/admin/categories` 实测 404；导航链接见 `common/b-sidebar.jspf:18,22`、`common/b-topbar.jspf:23`、`common/b-mobile-nav.jspf:35`、`article-detail.jsp:34` | B |
-| P0-2 | 无「通过 / 驳回」，新文章永远停在 PENDING | 状态机只有 submit/withdraw；审核者点「审核工作台」404 | B |
-| P0-3 | `sql/02_content.sql:47` 用中文句号结尾，建表 1064 | `cover_url ... COMMENT '...'。` → MySQL `ERROR 1064`，整个 B 表无法创建；本地已修复并提交 `1c52d5e` | B |
-| P0-4 | 安装与模块文档未更新 | README 已补全执行顺序；`docs/` 仍无 `开发文档-成员B.md`；B 的接口章节未同步 | B |
-| P0-5 | 头像上传成功但资料更新失败 | `POST /api/v1/files/avatar` 200；随后 `PUT /api/v1/me/avatar` 405（未实现）。`mine.js:18` 调用了 A 尚未交付的接口 | A 已补 `PUT /api/v1/me/profile`；`mine.js` 已改为调用它 |
-| P0-6 | `sql/02b_media.sql` 在新库重复加列 | 实测 `ERROR 1060 Duplicate column name 'media_type'` | B |
+1. **先拉最新 `main`，开新分支**（不要继续用旧的 `feat/b-article`）：
+   ```bash
+   git clone https://github.com/JFT-Group/QingXiangTuWen.git qingxiang-b
+   cd qingxiang-b
+   git switch -c feat/b-review-category
+   ```
+   已有仓库的：
+   ```bash
+   git switch main
+   git pull origin main
+   git switch -c feat/b-review-category
+   ```
+2. **审核台**：按 `docs/接口文档.md` §8 实现
+   - `GET /api/v1/reviews`、`GET /api/v1/reviews/{id}`
+   - `POST /api/v1/reviews/{id}/approve`、`/reject`
+   - `POST /api/v1/reviews/batch`（逐条事务、部分成功）
+   - `POST /api/v1/admin/articles/{id}/unpublish`、`/republish`
+   - 页面 `/admin/reviews`（导航已经指过去）
+3. **分类管理**：按 `docs/接口文档.md` §7 实现
+   - `GET /api/v1/categories/tree`（公开）
+   - `/api/v1/admin/categories` 的新增/编辑/启停/删除
+   - 页面 `/admin/categories`
+4. **文档**
+   - 新建 `docs/开发文档-成员B.md`（按模板）
+   - 更新 `docs/接口文档.md` §6/§7/§8/§9：媒体字段、`POST /files/media`、分类是否必填
+   - README 的安装顺序已经由 A 补好，不要回退
+5. **收尾**
+   - `sql/02b_media.sql` 改为幂等或删除
+   - 清理 P1-4 死代码；修正 `ArticleService.java:31` 注释
+   - 集成测试不要依赖本机开发库的固定文章标题/昵称
+   - `04_seed_b.sql` 不要写死用户 id
+6. **自测后提 PR**（§4）
 
-## 3. P1（合入前建议处理）
+> 注意：A 已经改过你的 `sql/05_creator_permissions.sql`、`b-sidebar.jspf`、`b-topbar.jspf`、`mine.js`、`README.md`。**先把 `main` 拉下来再动手**，不要用旧分支覆盖这些文件。
 
-| # | 问题 | 证据 | 归属 |
-|---|---|---|---|
-| P1-1 | 匿名写文章曾返回 403「页面已过期」而非契约的 401 | 已修正：`ApiWriteAuthInterceptor` 在 CSRF 之前拦 `/api/**` 非安全方法；curl 实测匿名 POST=401、公开 GET=200 | 已解决 |
-| P1-2 | 契约漂移 | `POST /articles` 文档要求分类必填，实现允许 null；新增 `mediaType/mediaUrls/coverUrl`、`POST /files/media` 未写入接口文档 | B |
-| P1-3 | 阅读者曾被授予创作权，与产品文档「阅读者不能创作」冲突 | 已修正：`05_creator_permissions.sql` 删除 READER 的文章权限并 +1 `session_version`；CREATOR/REVIEWER 保留创作能力；`/me` 文案按角色区分 | 已解决 |
-| P1-4 | 死代码与错误注释 | `ReviewAction`、`ReviewRequest`、`BatchReviewRequest`、`ArticleReview`、`selectReviewQueue/selectReviewLogs/adminDelete`、`NotificationService` 基本无调用；`ArticleService.java:31` 引用不存在的 `ReviewActionService` | B |
-| P1-5 | 分类软删除 + 唯一键 `(parent_id,name)` 导致名称不可复用 | `02_content.sql` 唯一键未包含 `deleted` | B |
-| P1-6 | 集成测试依赖本机开发库与种子数据 | `ArticleMapperIntegrationTest` 直接 `@SpringJUnitConfig(SpringConfig.class)` 连 `qingxiang` 库 | B |
-| P1-7 | 种子写死 id | `04_seed_b.sql` 写死 author=2、notification receiver=1/actor=2 | B |
-| P1-8 | 视频只校验 16 字节 `ftyp` | 16 字节假 mp4 可上传成功；M1 可接受，答辩前需说明 | B |
-| P1-9 | API 时间无时区 | 实测 `2026-11-15T09:20:00`，文档示例带 `+08:00` | B / A |
-| P1-10 | 共享文件被越权直接修改 | B 直接改了 A 的 `SpringMvcConfig`、`AuthPageController`、`me.jsp`、`register.jsp`、`PermissionCatalog`、`pom.xml`；规范要求 B 提 PR、A 合并 | 流程 / A 复核 |
+## 1. 验收标准
 
-## 4. 账号中心与全局导航不一致
+完成审核台后，下面这条链路必须能走通：
 
-### 4.1 现状
+1. `creator/123456` 写一篇图文 → 提交审核。
+2. `reviewer/123456` 打开「审核工作台」→ 看到待审列表 → 通过。
+3. 发现页出现这篇文章；作者收到站内通知。
+4. 另一篇被驳回，作者能看到驳回理由并修改重提。
+5. 批量通过 2 条 + 其中 1 条已被处理：返回 `successCount/failCount/failures`，失败项状态不变。
+6. 分类：新增子分类、改名、排序、停用（有内容/子分类时 409）、删除。
+7. 越权：`creator` 调审核接口 403；`reader` 调创作接口 403。
+8. `mvn clean test` 全绿，PR 里附命令输出和页面截图。
 
-- `me.jsp` 仍是 A 切片 1 的独立布局：只引 `app.css`，自带旧 `.topbar`，无左侧索引、无移动端底栏（`me.jsp:12,15`）。
-- B 的页面使用 `app.css + b.css`、`common/b-topbar.jspf`、`common/b-sidebar.jspf`、`common/b-mobile-nav.jspf`。
-- `b-topbar.jspf:26` 的头像链接指向 `/creator/mine`，账号中心入口反而不在头像上。
-- `b-sidebar.jspf:27` 的「账号中心」没有 `active` 高亮键。
+## 2. 问题台账（B 需要处理）
 
-### 4.2 推荐方案
+### P0
 
-| 页面类型 | 布局 | 理由 |
+| # | 问题 | 状态 |
 |---|---|---|
-| 顶级目的地：发现 / 我的内容 / **账号中心** / 审核台 / 分类管理 | 固定顶栏 + 左侧索引，当前项高亮；**不出现返回按钮** | 侧栏是全局导航；账号中心是侧栏的同级目的地，不是从某页进入的子流程 |
-| 任务页：写图文 / 编辑 | 顶栏 + 返回按钮；不显示左侧索引 | 编辑器是带未保存状态的任务流，返回用于“退出任务”，侧栏切换容易丢草稿 |
-| 认证页：登录 / 注册 | 独立布局 | 无导航语义 |
+| P0-1 | `/api/v1/reviews/**`、`/api/v1/categories/**`、`/admin/reviews`、`/admin/categories` 全是 404 | **B 待做** |
+| P0-2 | 没有「通过/驳回」，文章永远停在 PENDING | **B 待做** |
+| P0-3 | `sql/02_content.sql:47` 中文句号导致建表 1064 | A 已代修（`1c52d5e`），后续由 B 维护 |
+| P0-4 | `docs/开发文档-成员B.md` 缺失；B 的接口章节未同步 | **B 待做**（README 已由 A 补） |
+| P0-5 | 头像资料更新 405 | 已解决：A 提供 `PUT /api/v1/me/profile`，`mine.js` 已接 |
+| P0-6 | `sql/02b_media.sql` 在新库重复加列 | **B 待做** |
 
-结论：**账号中心采用「保留左侧索引」的方式**，不要加返回按钮；写图文继续保留返回按钮。移动端顶部保留返回、底部保留 4 项导航。
+### P1
 
-### 4.3 归属与实施顺序（重点）
+| # | 问题 | 状态 |
+|---|---|---|
+| P1-1 | 匿名写接口返回 403 而非 401 | 已解决：`ApiWriteAuthInterceptor`（A） |
+| P1-2 | 契约漂移：媒体字段、`/files/media`、分类必填未写进接口文档 | **B 待做** |
+| P1-3 | 阅读者被授予创作权 | 已解决：`sql/05_creator_permissions.sql` 只给 CREATOR/REVIEWER，READER 权限已删并 +`session_version` |
+| P1-4 | 死代码与 `ReviewActionService` 错误注释 | **B 待做** |
+| P1-5 | 分类软删除 + `(parent_id,name)` 唯一键导致名称不可复用 | **B 待做** |
+| P1-6 | 集成测试依赖本机开发库固定数据 | **B 待做** |
+| P1-7 | `04_seed_b.sql` 写死用户 id | **B 待做** |
+| P1-8 | 视频只校验 16 字节 `ftyp` | M1 可接受，答辩说明即可 |
+| P1-9 | API 时间无时区，文档示例带 `+08:00` | 可选，顺手对齐 |
+| P1-10 | B 曾直接改 A 的共享文件 | 已由 A 合并；以后改 A 文件先提 PR |
 
-- **页面归 A**：`/me`、`MePageController`、个人资料属于 A（`docs/模块划分与分工.md:26`），A 实现，B 不应改 `me.jsp`。
-- **外壳归 B**：`common/b-*.jspf`、`b.css`、`PageSupport`、`BPageModelAdvice` 由 B 提供。
-- **A 的落地顺序**：`feat/b-article` 已合并进 `main`，A 已按 §4.4 改造 `/me`；未合并时不要先复制外壳，否则必然冲突。
-- B 侧两处小修已由 A 在合并后完成：头像链接改 `/me`；侧栏「账号中心」支持 `active` 高亮。
+## 3. 账号中心与导航（已完成，B 不要改）
 
-### 4.4 A 的实现清单（合并后）
+- `/me` 已按「顶栏 + 左侧索引 + 移动端导航」实现，账号中心高亮，无返回按钮。
+- 头像上传 + 资料修改已接到 `PUT /api/v1/me/profile`。
+- `b-topbar.jspf` 头像链接已指向 `/me`；`b-sidebar.jspf` 已支持 `active == 'account'`。
+- 这部分归 A：`me.jsp`、`account.js`、`app.css`、`MePageController`、A 的 Java/测试。
 
-1. `MePageController#me` 调用 `PageSupport.common(request, model)`（同包可直接调用），保留 `account`、`capabilities`；BPageModelAdvice 已补 `avatarUrl`。
-2. `me.jsp` 引入 `app.css + b.css`，include `b-sprite / b-topbar / b-sidebar / b-mobile-nav / b-scripts`。
-3. 外层改为 `<div class="qx-shell">` + `<main class="qx-main">`，`active="account"`；移除旧 `.topbar`。
-4. 退出表单的 token 统一用 `${csrfToken}`（`PageSupport` 已提供），不再用 `account.csrfToken`。
-5. 保留「你可以做什么」能力卡片；资料编辑/头像入口等 A 的 `/api/v1/me/profile` 落地后再加。
+## 4. 合并步骤（小白版，逐步复制）
 
-## 5. 合并前 Checklist
-
-**B（阻塞）**
-
-- [ ] 补 `/api/v1/reviews/**`、`/api/v1/admin/articles/{id}/unpublish|republish` 与审核台页面
-- [ ] 补 `/api/v1/categories/**`、`/api/v1/admin/categories/**` 与分类管理页面
-- [ ] 补 `docs/开发文档-成员B.md`；更新 `docs/接口文档.md` §6/§7/§8/§9（media 字段、`/files/media`、分类是否必填）
-- [ ] 更新 `README.md` 安装顺序：`01_core → 02_content → 04_seed → 04_seed_b → 05`
-- [ ] `02b_media.sql` 改为幂等或删除
-- [ ] 修正 `ArticleService.java:31` 注释，清理 P1-4 死代码
-- [x] 处理 P1-3（READER 创作权）与文档冲突，组内确认
-- [x] 推送 `1c52d5e` SQL 修复
-- [x] `b-topbar.jspf:26` 头像链接 `/creator/mine` → `/me`
-- [x] `b-sidebar.jspf:27` 账号中心增加 `active == 'account'` 高亮
-
-**A（合并后 / 共享）**
-
-- [x] 先合并 `feat/b-article`，再按 §4.4 改造 `/me`
-- [x] 补 `/api/v1/me/profile`（含头像）；`mine.js` 已改为调用它
-- [x] 评估 `SpringMvcConfig` 的 article 登录排除，保证匿名写接口返回 401
-- [ ] 复核 B 对 A 文件（`SpringMvcConfig`、`AuthPageController`、`me.jsp`、`register.jsp`、`PermissionCatalog`、`pom.xml`）的改动
-
-**合并前统一验证**
-
-- [ ] 空库执行 `01 → 02 → 04 → 04_seed_b → 05`
-- [ ] `mvn clean test`
-- [ ] 主链路：登录 → 写图文（文本/图片/视频）→ 提交审核 → 审核者通过 → 发现页可见 → 驳回 → 作者修改重提
-
-## 6. 复核命令
+### 4.1 第一次准备
 
 ```bash
-# 建库
-mysql --default-character-set=utf8mb4 < sql/01_core.sql
-mysql --default-character-set=utf8mb4 < sql/02_content.sql
-mysql --default-character-set=utf8mb4 < sql/04_seed.sql
-mysql --default-character-set=utf8mb4 < sql/04_seed_b.sql
-mysql --default-character-set=utf8mb4 < sql/05_creator_permissions.sql
+git clone https://github.com/JFT-Group/QingXiangTuWen.git qingxiang-b
+cd qingxiang-b
+git config user.name "你的名字"
+git config user.email "你的邮箱"
+git status
+```
 
-# 测试
+### 4.2 每次开发前
+
+```bash
+git switch main
+git pull origin main
+git switch -c feat/b-review-category
+```
+
+> 分支名一次任务一个；不要多人共用 `main` 直接改。
+
+### 4.3 写完后自测
+
+```bash
+# 1. 建库（本机 MySQL 已启动）
+mysql -uroot -p --default-character-set=utf8mb4 < sql/01_core.sql
+mysql -uroot -p --default-character-set=utf8mb4 < sql/02_content.sql
+mysql -uroot -p --default-character-set=utf8mb4 < sql/04_seed.sql
+mysql -uroot -p --default-character-set=utf8mb4 < sql/04_seed_b.sql
+mysql -uroot -p --default-character-set=utf8mb4 < sql/05_creator_permissions.sql
+
+# 2. 配置数据库密码
+#    复制 src/main/resources/common/db.properties.example
+#    为 src/main/resources/common/db.properties，填本机 MySQL 密码
+
+# 3. 测试
 mvn -B clean test
 
-# 页面
+# 4. 启动
 mvn -B -DskipTests clean package
 mvn -B -Prun cargo:run
+# http://127.0.0.1:18080/qingxiang/
 ```
 
 演示账号：`creator` / `reviewer` / `reader`，密码均 `123456`。
+
+### 4.4 提交并推送
+
+```bash
+git status                  # 确认只包含你这次的文件
+git add <你改的文件>
+git commit -m "feat(b-review): 完成审核台与分类管理"
+git push -u origin feat/b-review-category
+```
+
+### 4.5 在网页上提 PR
+
+1. 打开 https://github.com/JFT-Group/QingXiangTuWen
+2. 页面顶部会出现 `Compare & pull request`，点它。
+3. `base` 选 `main`，`compare` 选 `feat/b-review-category`。
+4. 标题写清楚；描述里贴上：
+   - 做了哪些接口/页面
+   - `mvn clean test` 结果
+   - 主链路截图（审核通过、驳回、分类管理）
+5. 点 `Create pull request`。
+6. **不要自己点 Merge**，等 A 看完再合；至少让另一位组员点过。
+
+### 4.6 主分支有新提交时
+
+```bash
+git switch main
+git pull origin main
+git switch feat/b-review-category
+git merge main
+# 有冲突就改文件，改完：
+git add <冲突文件>
+git commit
+git push
+```
+
+### 4.7 三条红线
+
+- 不要 `git push -f origin main`。
+- 不要直接往 `main` 提交；一律走分支 + PR。
+- 不要改 A 的 `me.jsp`、`account.js`、A 的 Java/测试；要改先在本 issue 里说。
+
+## 5. 遇到问题怎么问
+
+把这三样贴到群里/issue：
+
+1. 你执行到哪一步（命令原文）。
+2. `git status` 的输出。
+3. 完整报错（不要只说「跑不起来」）。
+
+常见问题：
+
+- `Port 18080 already in use`：先关掉旧的 Tomcat/Qingxiang 窗口，或 `netstat -ano | findstr :18080` 找 PID。
+- `Access denied for user 'root'`：`db.properties` 密码不对。
+- `Table 'qingxiang.article' doesn't exist`：§4.3 的建库顺序没执行完。
+- JSP 404/500：先看 `target/cargo/configurations/tomcat9x/logs/qingxiang.log` 的最后 30 行。
