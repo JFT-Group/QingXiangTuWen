@@ -44,7 +44,7 @@ CREATE TABLE article (
     content_type   VARCHAR(20)   NOT NULL DEFAULT 'TEXT' COMMENT 'TEXT / HTML',
     media_type     VARCHAR(10)   NOT NULL DEFAULT 'TEXT' COMMENT 'TEXT / IMAGE / VIDEO',
     media_urls     TEXT          NULL COMMENT '图片/视频 URL 的 JSON 数组；图片最多 9 张，视频 1 个',
-    cover_url      VARCHAR(512)  NULL COMMENT '图片帖取第一张；视频/文本为空'。
+    cover_url      VARCHAR(512)  NULL COMMENT '图片帖取第一张；视频/文本为空',
     cover_color    CHAR(7)       NOT NULL DEFAULT '#15803d' COMMENT '自动封面纯色',
     status         TINYINT       NOT NULL DEFAULT 0 COMMENT '0 草稿 / 1 待审核 / 2 已发布 / 3 已驳回 / 4 已下架',
     reject_reason  VARCHAR(500)  NULL COMMENT '最近一次驳回/下架理由',
