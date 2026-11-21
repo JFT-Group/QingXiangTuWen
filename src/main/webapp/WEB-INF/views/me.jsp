@@ -55,7 +55,7 @@
 
     <section class="panel" aria-labelledby="cap-title">
         <h2 id="cap-title">你可以做什么</h2>
-        <p class="muted">当前身份：<c:out value="${user.roleName}"/>。所有登录用户都可以浏览、点赞、收藏、评论和关注。</p>
+        <p class="muted">所有登录用户都可以浏览、发布和管理自己的内容；审核者额外拥有审核与分类管理入口。</p>
         <ul class="cap-grid">
             <c:forEach var="cap" items="${capabilities}">
                 <li class="cap-card">

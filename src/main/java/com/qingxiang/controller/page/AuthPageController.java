@@ -32,7 +32,7 @@ public class AuthPageController {
 
     @GetMapping("/login")
     public String loginPage() {
-        return CurrentUser.get() == null ? "login" : "redirect:/me";
+        return CurrentUser.get() == null ? "login" : "redirect:/discover";
     }
 
     @PostMapping("/login")
@@ -46,7 +46,7 @@ public class AuthPageController {
         try {
             LoginResult result = authService.login(loginRequest);
             SessionUtil.start(request, result.loginUser());
-            return "redirect:/me";
+            return "redirect:/discover";
         } catch (BusinessException e) {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("username", username);
@@ -57,7 +57,7 @@ public class AuthPageController {
     @GetMapping("/register")
     public String registerPage() {
         if (CurrentUser.get() != null) {
-            return "redirect:/me";
+            return "redirect:/discover";
         }
         return "register";
     }
@@ -81,7 +81,7 @@ public class AuthPageController {
             loginRequest.setPassword(form.getPassword());
             LoginResult result = authService.login(loginRequest);
             SessionUtil.start(request, result.loginUser());
-            return "redirect:/me";
+            return "redirect:/discover";
         } catch (BusinessException e) {
             model.addAttribute("error", e.getMessage());
             return "register";

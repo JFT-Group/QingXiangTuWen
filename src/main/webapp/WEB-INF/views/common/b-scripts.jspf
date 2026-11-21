@@ -1,0 +1,9 @@
+<script defer src="${ctx}/static/vendor/gsap.min.js"></script>
+<script defer src="${ctx}/static/vendor/ScrollTrigger.min.js"></script>
+<script defer src="${ctx}/static/vendor/Flip.min.js"></script>
+<script defer src="${ctx}/static/vendor/Draggable.min.js"></script>
+<script defer src="${ctx}/static/js/b-app.js"></script>
+<c:if test="${not empty pageScript}">
+    <script defer src="${ctx}/static/js/${pageScript}.js"></script>
+</c:if>
+<%@ page pageEncoding="UTF-8" %>

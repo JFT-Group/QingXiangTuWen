@@ -1,0 +1,44 @@
+<aside class="qx-sidebar" aria-label="主导航">
+    <nav class="qx-side-nav">
+        <a class="side-item ${active == 'discover' ? 'is-active' : ''}" href="${ctx}/discover">
+            <svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg>
+            发现
+        </a>
+        <c:if test="${loginUser.hasPermission('article:create')}">
+            <a class="side-item ${active == 'mine' ? 'is-active' : ''}" href="${ctx}/creator/mine">
+                <svg class="icon" aria-hidden="true"><use href="#i-file"/></svg>
+                我的内容
+            </a>
+            <a class="side-item ${active == 'create' ? 'is-active' : ''}" href="${ctx}/creator/articles/new">
+                <svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>
+                写图文
+            </a>
+        </c:if>
+        <c:if test="${loginUser.hasPermission('article:review')}">
+            <a class="side-item ${active == 'reviews' ? 'is-active' : ''}" href="${ctx}/admin/reviews">
+                <svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg>
+                审核工作台
+            </a>
+            <a class="side-item ${active == 'categories' ? 'is-active' : ''}" href="${ctx}/admin/categories">
+                <svg class="icon" aria-hidden="true"><use href="#i-folder"/></svg>
+                分类管理
+            </a>
+        </c:if>
+        <a class="side-item" href="${ctx}/me">
+            <svg class="icon" aria-hidden="true"><use href="#i-user"/></svg>
+            账号中心
+        </a>
+    </nav>
+
+    <c:if test="${loginUser.hasPermission('article:create')}">
+        <a class="qx-btn qx-btn-primary qx-publish" href="${ctx}/creator/articles/new">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-plus"/></svg>
+            发布图文
+        </a>
+    </c:if>
+
+    <div class="qx-side-foot">
+        轻享图文 · M1
+    </div>
+</aside>
+<%@ page pageEncoding="UTF-8" %>

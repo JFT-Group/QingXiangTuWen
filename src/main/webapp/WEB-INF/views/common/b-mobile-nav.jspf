@@ -1,0 +1,49 @@
+<nav class="qx-mobile-nav" aria-label="移动端导航">
+    <div class="inner">
+        <a class="${active == 'discover' ? 'is-active' : ''}" href="${ctx}/discover">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-home"/></svg>
+            发现
+        </a>
+        <c:choose>
+            <c:when test="${loginUser.hasPermission('article:create')}">
+                <a class="publish" href="${ctx}/creator/articles/new" aria-label="发布图文">
+                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-plus"/></svg>
+                </a>
+            </c:when>
+            <c:otherwise>
+                <a class="publish" href="${ctx}/discover" aria-label="发现">
+                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-search"/></svg>
+                </a>
+            </c:otherwise>
+        </c:choose>
+        <c:choose>
+            <c:when test="${loginUser.hasPermission('article:create')}">
+                <a class="${active == 'mine' ? 'is-active' : ''}" href="${ctx}/creator/mine">
+                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-user"/></svg>
+                    我的
+                </a>
+            </c:when>
+            <c:otherwise>
+                <a class="${active == 'mine' ? 'is-active' : ''}" href="${ctx}/me">
+                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-user"/></svg>
+                    我的
+                </a>
+            </c:otherwise>
+        </c:choose>
+        <c:choose>
+            <c:when test="${loginUser.hasPermission('article:review')}">
+                <a class="${active == 'reviews' ? 'is-active' : ''}" href="${ctx}/admin/reviews">
+                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-shield"/></svg>
+                    审核
+                </a>
+            </c:when>
+            <c:otherwise>
+                <a class="${active == 'discover' ? 'is-active' : ''}" href="${ctx}/discover">
+                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"/></svg>
+                    推荐
+                </a>
+            </c:otherwise>
+        </c:choose>
+    </div>
+</nav>
+<%@ page pageEncoding="UTF-8" %>

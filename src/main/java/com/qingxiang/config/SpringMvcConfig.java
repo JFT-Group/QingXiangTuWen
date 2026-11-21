@@ -52,7 +52,10 @@ public class SpringMvcConfig implements WebMvcConfigurer {
                         "/error",
                         "/favicon.ico",
                         "/api/v1/auth/login",
-                        "/api/v1/auth/register");
+                        "/api/v1/auth/register",
+                        "/api/v1/articles/**",
+                        "/api/v1/categories/**",
+                        "/api/v1/files/**");
 
         registry.addInterceptor(csrfInterceptor())
                 .addPathPatterns("/**")

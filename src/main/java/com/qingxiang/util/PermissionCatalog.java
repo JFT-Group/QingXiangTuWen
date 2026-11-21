@@ -21,7 +21,7 @@ public final class PermissionCatalog {
             new CapabilityVO("站内通知", "审核、评论、点赞等提醒"));
 
     static {
-        BY_CODE.put("article:create", new CapabilityVO("发布图文", "写下标题和正文，先存草稿"));
+        BY_CODE.put("article:create", new CapabilityVO("发布图文", "发布文本、多图或单视频内容，先存草稿"));
         BY_CODE.put("article:update", new CapabilityVO("编辑图文", "修改自己的内容，已发布编辑后重新送审"));
         BY_CODE.put("article:delete", new CapabilityVO("删除图文", "移除自己的内容，不再出现在信息流"));
         BY_CODE.put("article:submit", new CapabilityVO("提交审核", "把草稿送审，或从待审队列撤回"));

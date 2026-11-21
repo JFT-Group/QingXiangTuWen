@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qingxiang.mapper.CategoryMapper">
+
+    <select id="selectAdminRows" resultType="com.qingxiang.vo.CategoryTreeVO">
+        SELECT c.id,
+               c.parent_id,
+               c.name,
+               c.level,
+               c.sort,
+               CASE c.status WHEN 1 THEN 'ENABLED' ELSE 'DISABLED' END AS status,
+               COUNT(a.id) AS article_count
+        FROM category c
+        LEFT JOIN article a ON a.category_id = c.id AND a.deleted = 0
+        WHERE c.deleted = 0
+        GROUP BY c.id, c.parent_id, c.name, c.level, c.sort, c.status
+        ORDER BY c.level ASC, c.sort ASC, c.id ASC
+    </select>
+
+    <select id="countChildren" resultType="int">
+        SELECT COUNT(*) FROM category WHERE parent_id = #{parentId} AND deleted = 0
+    </select>
+
+    <select id="countArticles" resultType="int">
+        SELECT COUNT(*) FROM article WHERE category_id = #{categoryId} AND deleted = 0
+    </select>
+
+    <update id="updateSort">
+        UPDATE category SET sort = #{sort}, update_time = NOW()
+        WHERE id = #{id} AND deleted = 0
+    </update>
+</mapper>

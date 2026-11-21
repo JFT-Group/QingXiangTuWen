@@ -14,7 +14,7 @@
 <main class="auth-shell">
     <a class="brand" href="${ctx}/">轻享<span>图文</span></a>
     <h1>注册</h1>
-    <p class="auth-sub">注册后默认成为创作者，可以发布图文。</p>
+    <p class="auth-sub">注册后即可浏览、发布和管理自己的图文。</p>
 
     <c:if test="${not empty error}">
         <p class="alert" role="alert"><c:out value="${error}"/></p>

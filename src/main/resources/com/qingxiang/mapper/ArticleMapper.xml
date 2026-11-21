@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qingxiang.mapper.ArticleMapper">
+
+    <sql id="cardColumns">
+        a.id,
+        a.title,
+        a.cover_color,
+        a.media_type,
+        a.cover_url,
+        CASE a.status
+            WHEN 0 THEN 'DRAFT'
+            WHEN 1 THEN 'PENDING'
+            WHEN 2 THEN 'PUBLISHED'
+            WHEN 3 THEN 'REJECTED'
+            WHEN 4 THEN 'UNPUBLISHED'
+            ELSE 'DRAFT' END AS status,
+        a.category_id,
+        c.name AS category_name,
+        a.author_id,
+        u.nickname AS author_name,
+        u.avatar_url AS author_avatar,
+        a.like_count,
+        a.favorite_count,
+        a.comment_count,
+        a.reject_reason,
+        a.submit_time,
+        a.publish_time,
+        a.create_time,
+        a.update_time
+    </sql>
+
+    <select id="selectFeed" resultType="com.qingxiang.vo.ArticleCardVO">
+        SELECT <include refid="cardColumns"/>
+        FROM article a
+        JOIN sys_user u ON u.id = a.author_id AND u.deleted = 0
+        LEFT JOIN category c ON c.id = a.category_id
+        WHERE a.deleted = 0 AND a.status = 2
+        <if test="q.keyword != null and q.keyword != ''">
+            AND (
+                a.title LIKE CONCAT('%', #{q.keyword}, '%')
+                OR a.content LIKE CONCAT('%', #{q.keyword}, '%')
+                OR u.nickname LIKE CONCAT('%', #{q.keyword}, '%')
+                OR c.name LIKE CONCAT('%', #{q.keyword}, '%')
+            )
+        </if>
+        <if test="q.authorId != null">
+            AND a.author_id = #{q.authorId}
+        </if>
+        <if test="categoryIds != null and categoryIds.size() > 0">
+            AND a.category_id IN
+            <foreach collection="categoryIds" item="cid" open="(" separator="," close=")">#{cid}</foreach>
+        </if>
+        <choose>
+            <when test="q.keyword != null and q.keyword != ''">
+                ORDER BY
+                CASE
+                    WHEN a.title = #{q.keyword} THEN 0
+                    WHEN a.title LIKE CONCAT(#{q.keyword}, '%') THEN 1
+                    WHEN a.title LIKE CONCAT('%', #{q.keyword}, '%') THEN 2
+                    WHEN c.name LIKE CONCAT('%', #{q.keyword}, '%') THEN 3
+                    WHEN u.nickname LIKE CONCAT('%', #{q.keyword}, '%') THEN 4
+                    ELSE 5
+                END ASC,
+                <choose>
+                    <when test="q.sort == 'oldest'">a.publish_time ASC, a.id ASC</when>
+                    <otherwise>a.publish_time DESC, a.id DESC</otherwise>
+                </choose>
+            </when>
+            <otherwise>
+                <choose>
+                    <when test="q.sort == 'oldest'">ORDER BY a.publish_time ASC, a.id ASC</when>
+                    <otherwise>ORDER BY a.publish_time DESC, a.id DESC</otherwise>
+                </choose>
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="selectMine" resultType="com.qingxiang.vo.ArticleCardVO">
+        SELECT <include refid="cardColumns"/>
+        FROM article a
+        JOIN sys_user u ON u.id = a.author_id AND u.deleted = 0
+        LEFT JOIN category c ON c.id = a.category_id
+        WHERE a.deleted = 0 AND a.author_id = #{q.authorId}
+        <if test="q.statusCode != null">
+            AND a.status = #{q.statusCode}
+        </if>
+        ORDER BY a.update_time DESC, a.id DESC
+    </select>
+
+    <select id="selectReviewQueue" resultType="com.qingxiang.vo.ReviewItemVO">
+        SELECT a.id,
+               a.title,
+               a.author_id,
+               u.nickname AS author_name,
+               a.category_id,
+               c.name AS category_name,
+               a.cover_color,
+               COALESCE(a.submit_time, a.update_time) AS submit_time,
+               a.update_time
+        FROM article a
+        JOIN sys_user u ON u.id = a.author_id AND u.deleted = 0
+        LEFT JOIN category c ON c.id = a.category_id
+        WHERE a.deleted = 0 AND a.status = 1
+        <if test="q.keyword != null and q.keyword != ''">
+            AND (a.title LIKE CONCAT('%', #{q.keyword}, '%')
+                 OR u.nickname LIKE CONCAT('%', #{q.keyword}, '%'))
+        </if>
+        <if test="categoryIds != null and categoryIds.size() > 0">
+            AND a.category_id IN
+            <foreach collection="categoryIds" item="cid" open="(" separator="," close=")">#{cid}</foreach>
+        </if>
+        ORDER BY COALESCE(a.submit_time, a.update_time) ASC, a.id ASC
+    </select>
+
+    <select id="selectDetail" resultType="com.qingxiang.vo.ArticleDetailVO">
+        SELECT a.id,
+               a.title,
+               a.content,
+               a.cover_color,
+               a.media_type,
+               a.media_urls AS media_urls_raw,
+               a.cover_url,
+               CASE a.status
+                   WHEN 0 THEN 'DRAFT'
+                   WHEN 1 THEN 'PENDING'
+                   WHEN 2 THEN 'PUBLISHED'
+                   WHEN 3 THEN 'REJECTED'
+                   WHEN 4 THEN 'UNPUBLISHED'
+                   ELSE 'DRAFT' END AS status,
+               a.author_id,
+               u.nickname AS author_name,
+               u.avatar_url AS author_avatar,
+               a.category_id,
+               c.name AS category_name,
+               a.reject_reason,
+               a.like_count,
+               a.favorite_count,
+               a.comment_count,
+               a.submit_time,
+               a.review_time,
+               a.reviewer_id,
+               r.nickname AS reviewer_name,
+               a.publish_time,
+               a.create_time,
+               a.update_time
+        FROM article a
+        JOIN sys_user u ON u.id = a.author_id AND u.deleted = 0
+        LEFT JOIN category c ON c.id = a.category_id
+        LEFT JOIN sys_user r ON r.id = a.reviewer_id
+        WHERE a.id = #{id} AND a.deleted = 0
+    </select>
+
+    <select id="selectEdit" resultType="com.qingxiang.vo.ArticleEditVO">
+        SELECT id,
+               title,
+               content,
+               category_id,
+               cover_color,
+               media_type,
+               media_urls AS media_urls_raw,
+               cover_url,
+               CASE status
+                   WHEN 0 THEN 'DRAFT'
+                   WHEN 1 THEN 'PENDING'
+                   WHEN 2 THEN 'PUBLISHED'
+                   WHEN 3 THEN 'REJECTED'
+                   WHEN 4 THEN 'UNPUBLISHED'
+                   ELSE 'DRAFT' END AS status,
+               reject_reason
+        FROM article
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <select id="selectReviewLogs" resultType="com.qingxiang.vo.ReviewLogVO">
+        SELECT ar.id,
+               ar.action,
+               ar.reviewer_id,
+               u.nickname AS reviewer_name,
+               ar.reason,
+               CASE ar.from_status
+                   WHEN 0 THEN 'DRAFT' WHEN 1 THEN 'PENDING' WHEN 2 THEN 'PUBLISHED'
+                   WHEN 3 THEN 'REJECTED' WHEN 4 THEN 'UNPUBLISHED' ELSE 'DRAFT' END AS from_status,
+               CASE ar.to_status
+                   WHEN 0 THEN 'DRAFT' WHEN 1 THEN 'PENDING' WHEN 2 THEN 'PUBLISHED'
+                   WHEN 3 THEN 'REJECTED' WHEN 4 THEN 'UNPUBLISHED' ELSE 'DRAFT' END AS to_status,
+               ar.create_time
+        FROM article_review ar
+        JOIN sys_user u ON u.id = ar.reviewer_id
+        WHERE ar.article_id = #{articleId}
+        ORDER BY ar.create_time DESC, ar.id DESC
+    </select>
+
+    <select id="countMine" resultType="com.qingxiang.vo.MineCountVO">
+        SELECT CASE status
+                   WHEN 0 THEN 'DRAFT'
+                   WHEN 1 THEN 'PENDING'
+                   WHEN 2 THEN 'PUBLISHED'
+                   WHEN 3 THEN 'REJECTED'
+                   WHEN 4 THEN 'UNPUBLISHED'
+                   ELSE 'DRAFT' END AS status,
+               COUNT(*) AS count
+        FROM article
+        WHERE author_id = #{authorId} AND deleted = 0
+        GROUP BY status
+    </select>
+
+    <update id="updateContent">
+        UPDATE article
+        SET title = #{title},
+            content = #{content},
+            category_id = #{categoryId},
+            media_type = #{mediaType},
+            media_urls = #{mediaUrls},
+            cover_url = #{coverUrl},
+            status = #{newStatus},
+            reject_reason = CASE WHEN #{newStatus} = 1 THEN NULL ELSE reject_reason END,
+            reviewer_id = CASE WHEN #{newStatus} = 1 THEN NULL ELSE reviewer_id END,
+            review_time = CASE WHEN #{newStatus} = 1 THEN NULL ELSE review_time END,
+            submit_time = CASE WHEN #{newStatus} = 1 THEN NOW() ELSE submit_time END,
+            version = version + 1,
+            update_time = NOW()
+        WHERE id = #{id}
+          AND author_id = #{authorId}
+          AND deleted = 0
+          AND status = #{expectedStatus}
+          AND version = #{version}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE article
+        SET status = #{toStatus},
+            reject_reason = CASE WHEN #{toStatus} IN (0, 1, 2) THEN NULL ELSE #{reason} END,
+            reviewer_id = CASE WHEN #{toStatus} IN (0, 1) THEN NULL ELSE #{reviewerId} END,
+            review_time = CASE
+                              WHEN #{toStatus} IN (0, 1) THEN NULL
+                              WHEN #{toStatus} IN (2, 3, 4) THEN NOW()
+                              ELSE review_time END,
+            publish_time = CASE WHEN #{toStatus} = 2 THEN NOW() ELSE publish_time END,
+            submit_time = CASE WHEN #{toStatus} = 1 THEN NOW() ELSE submit_time END,
+            version = version + 1,
+            update_time = NOW()
+        WHERE id = #{id}
+          AND status = #{fromStatus}
+          AND deleted = 0
+    </update>
+
+    <update id="softDeleteByAuthor">
+        UPDATE article
+        SET deleted = 1,
+            title = '已删除内容',
+            content = '',
+            category_id = NULL,
+            version = version + 1,
+            update_time = NOW()
+        WHERE id = #{id}
+          AND author_id = #{authorId}
+          AND deleted = 0
+          AND status = #{expectedStatus}
+          AND status &lt;&gt; 1
+    </update>
+
+    <update id="adminDelete">
+        UPDATE article
+        SET deleted = 1,
+            title = '已删除内容',
+            content = '',
+            category_id = NULL,
+            version = version + 1,
+            update_time = NOW()
+        WHERE id = #{id}
+          AND deleted = 0
+          AND status = #{expectedStatus}
+    </update>
+</mapper>

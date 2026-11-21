@@ -1,0 +1,44 @@
+<header class="qx-topbar">
+    <a class="brand" href="${ctx}/discover">轻享<span>图文</span></a>
+
+    <form class="qx-search" method="get" action="${ctx}/discover" role="search">
+        <label class="sr-only" for="global-search">搜索</label>
+        <input id="global-search" type="search" name="keyword"
+               value="${fn:escapeXml(keyword)}" placeholder="搜索标题、作者或分类"
+               autocomplete="off">
+        <c:if test="${not empty categoryId}">
+            <input type="hidden" name="categoryId" value="${categoryId}">
+        </c:if>
+        <button type="submit" aria-label="搜索">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-search"/></svg>
+        </button>
+    </form>
+
+    <div class="qx-top-actions">
+        <a class="qx-nav-link" href="${ctx}/discover">发现</a>
+        <c:if test="${loginUser.hasPermission('article:create')}">
+            <a class="qx-nav-link" href="${ctx}/creator/mine">我的内容</a>
+        </c:if>
+        <c:if test="${loginUser.hasPermission('article:review')}">
+            <a class="qx-nav-link" href="${ctx}/admin/reviews">审核台</a>
+        </c:if>
+        <div class="qx-user">
+            <a class="qx-avatar-sm" href="${ctx}/creator/mine" aria-label="我的内容">
+                <c:choose>
+                    <c:when test="${not empty avatarUrl}">
+                        <img src="${ctx}${fn:escapeXml(avatarUrl)}" alt="">
+                    </c:when>
+                    <c:otherwise>${fn:escapeXml(fn:substring(loginUser.nickname, 0, 1))}</c:otherwise>
+                </c:choose>
+            </a>
+            <span class="qx-user-name"><c:out value="${loginUser.nickname}"/></span>
+            <form method="post" action="${ctx}/logout">
+                <input type="hidden" name="_csrf" value="${fn:escapeXml(csrfToken)}">
+                <button class="icon-btn" type="submit" title="退出登录" aria-label="退出登录">
+                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-logout"/></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+</header>
+<%@ page pageEncoding="UTF-8" %>
