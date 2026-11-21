@@ -26,4 +26,19 @@ public final class SessionUtil {
             session.invalidate();
         }
     }
+
+    /** 资料修改后同步会话里的昵称；角色/权限/版本保持不变，不轮换 sessionId。 */
+    public static void updateNickname(HttpServletRequest request, String nickname) {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            return;
+        }
+        Object attribute = session.getAttribute(LoginUser.SESSION_KEY);
+        if (!(attribute instanceof LoginUser user) || nickname == null) {
+            return;
+        }
+        session.setAttribute(LoginUser.SESSION_KEY, new LoginUser(user.getId(), user.getUsername(),
+                nickname, user.getRoleId(), user.getRoleCode(), user.getSessionVersion(),
+                user.getPermissions()));
+    }
 }

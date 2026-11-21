@@ -15,7 +15,7 @@
                 const form = new FormData();
                 form.append("file", file);
                 const uploaded = await QX.api(QX.ctx + "/api/v1/files/avatar", {method: "POST", body: form});
-                await QX.api(QX.ctx + "/api/v1/me/avatar", {method: "PUT", body: {avatarUrl: uploaded.url}});
+                await QX.api(QX.ctx + "/api/v1/me/profile", {method: "PUT", body: {avatarUrl: uploaded.url}});
                 const box = document.getElementById("mine-avatar");
                 if (box) {
                     box.innerHTML = '<img src="' + QX.ctx + QX.escape(uploaded.url) + '" alt="头像">';

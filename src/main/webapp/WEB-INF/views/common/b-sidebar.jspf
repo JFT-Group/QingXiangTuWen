@@ -24,7 +24,7 @@
                 分类管理
             </a>
         </c:if>
-        <a class="side-item" href="${ctx}/me">
+        <a class="side-item ${active == 'account' ? 'is-active' : ''}" href="${ctx}/me">
             <svg class="icon" aria-hidden="true"><use href="#i-user"/></svg>
             账号中心
         </a>

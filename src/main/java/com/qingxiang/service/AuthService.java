@@ -1,9 +1,11 @@
 package com.qingxiang.service;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.qingxiang.dto.LoginRequest;
 import com.qingxiang.dto.LoginResult;
 import com.qingxiang.dto.LoginUser;
+import com.qingxiang.dto.ProfileUpdateRequest;
 import com.qingxiang.dto.RegisterRequest;
 import com.qingxiang.entity.Notification;
 import com.qingxiang.entity.SysRole;
@@ -19,15 +21,22 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * 注册与登录：密码只以 BCrypt 形态落库；登录结果由控制器写入会话。
  */
 @Service
 public class AuthService {
+
+    /** 头像地址只接受上传接口生成的随机文件名，拒绝外链与路径穿越。 */
+    private static final Pattern AVATAR_URL = Pattern.compile(
+            "^/api/v1/files/\\d{4}/(0[1-9]|1[0-2])/"
+                    + "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\\.(jpg|jpeg|png|webp)$");
 
     private final SysUserMapper userMapper;
     private final NotificationMapper notificationMapper;
@@ -126,6 +135,66 @@ public class AuthService {
         vo.setCsrfToken(csrfToken);
         vo.setUnreadCount(unreadCount(user.getId()));
         return vo;
+    }
+
+    /**
+     * 修改资料：字段为 null 表示不改；昵称不能清空；头像只接受本站上传地址。
+     * 昵称变化后由控制器同步会话，避免顶栏继续显示旧昵称。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public UserVO updateProfile(LoginUser loginUser, ProfileUpdateRequest request) {
+        SysUser user = userService.findById(loginUser.getId());
+        if (user == null) {
+            throw new BusinessException(401, "会话已失效，请重新登录");
+        }
+        if (request.getNickname() != null) {
+            String nickname = request.getNickname().trim();
+            if (nickname.isEmpty()) {
+                throw new BusinessException(400, "昵称不能为空");
+            }
+            if (nickname.length() > 50) {
+                throw new BusinessException(400, "昵称最多 50 字");
+            }
+            user.setNickname(nickname);
+        }
+        if (request.getAvatarUrl() != null) {
+            String avatarUrl = request.getAvatarUrl().trim();
+            if (avatarUrl.isEmpty()) {
+                user.setAvatarUrl(null);
+            } else {
+                if (!AVATAR_URL.matcher(avatarUrl).matches()) {
+                    throw new BusinessException(400, "头像地址不合法");
+                }
+                user.setAvatarUrl(avatarUrl);
+            }
+        }
+        if (request.getBio() != null) {
+            String bio = request.getBio().trim();
+            if (bio.length() > 200) {
+                throw new BusinessException(400, "简介最多 200 字");
+            }
+            user.setBio(bio.isEmpty() ? null : bio);
+        }
+        LambdaUpdateWrapper<SysUser> update = Wrappers.<SysUser>lambdaUpdate()
+                .eq(SysUser::getId, user.getId())
+                .set(SysUser::getUpdateTime, LocalDateTime.now());
+        if (request.getNickname() != null) {
+            update.set(SysUser::getNickname, user.getNickname());
+        }
+        if (request.getAvatarUrl() != null) {
+            update.set(SysUser::getAvatarUrl, user.getAvatarUrl());
+        }
+        if (request.getBio() != null) {
+            update.set(SysUser::getBio, user.getBio());
+        }
+        // 用 Wrapper 显式 set：updateById 默认忽略 null，清空头像/简介会失效。
+        userMapper.update(null, update);
+
+        SysRole role = userService.findRole(user.getRoleId());
+        if (role == null) {
+            throw new BusinessException(500, "角色配置缺失，请联系管理员");
+        }
+        return toVO(user, role);
     }
 
     public long unreadCount(Long userId) {

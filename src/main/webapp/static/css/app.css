@@ -528,3 +528,109 @@ input {
         transition: none !important;
     }
 }
+
+/* ---------------- 账号中心（A · 统一外壳） ---------------- */
+.account-page {
+    max-width: 720px;
+    margin: 0;
+    padding: 8px 0 24px;
+}
+
+.me-avatar-wrap {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.me-avatar {
+    width: 84px;
+    height: 84px;
+    overflow: hidden;
+}
+
+.me-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.me-avatar-edit {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--fg);
+    color: #fff;
+    cursor: pointer;
+}
+
+.me-avatar-edit .icon {
+    width: 14px;
+    height: 14px;
+}
+
+.profile-actions {
+    margin-left: auto;
+    padding-top: 4px;
+}
+
+.account-form {
+    display: grid;
+    gap: 16px;
+    max-width: 520px;
+    margin-top: 16px;
+}
+
+.account-form label {
+    display: grid;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fg-dim);
+}
+
+.account-form input,
+.account-form textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--fill);
+    font: inherit;
+    font-size: 14px;
+    color: var(--fg);
+}
+
+.account-form input:focus,
+.account-form textarea:focus {
+    outline: none;
+    border-color: var(--brand);
+    background: #fff;
+}
+
+.account-form textarea {
+    min-height: 88px;
+    resize: vertical;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+@media (max-width: 560px) {
+    .profile {
+        flex-wrap: wrap;
+    }
+
+    .profile-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+}

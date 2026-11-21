@@ -30,6 +30,8 @@ public class MePageController {
         var account = authService.profile(loginUser, csrfToken);
         model.addAttribute("account", account);
         model.addAttribute("capabilities", PermissionCatalog.describe(account.getPermissions()));
+        model.addAttribute("active", "account");
+        PageSupport.common(model, request);
         return "me";
     }
 }

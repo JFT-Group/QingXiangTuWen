@@ -23,7 +23,7 @@
             <a class="qx-nav-link" href="${ctx}/admin/reviews">审核台</a>
         </c:if>
         <div class="qx-user">
-            <a class="qx-avatar-sm" href="${ctx}/creator/mine" aria-label="我的内容">
+            <a class="qx-avatar-sm" href="${ctx}/me" aria-label="账号中心">
                 <c:choose>
                     <c:when test="${not empty avatarUrl}">
                         <img src="${ctx}${fn:escapeXml(avatarUrl)}" alt="">
