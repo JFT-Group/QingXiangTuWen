@@ -93,7 +93,16 @@
 
             <section class="panel" aria-labelledby="cap-title">
                 <h2 id="cap-title">你可以做什么</h2>
-                <p class="muted">所有登录用户都可以浏览、发布和管理自己的内容；审核者额外拥有审核与分类管理入口。</p>
+                <p class="muted">
+                    <c:choose>
+                        <c:when test="${loginUser.hasPermission('article:create')}">
+                            所有登录用户都可以浏览和互动；你可以发布和管理自己的图文，审核者额外拥有审核与分类管理入口。
+                        </c:when>
+                        <c:otherwise>
+                            你可以在发现页浏览已发布图文，点赞、收藏、评论和关注作者。
+                        </c:otherwise>
+                    </c:choose>
+                </p>
                 <ul class="cap-grid">
                     <c:forEach var="cap" items="${capabilities}">
                         <li class="cap-card">

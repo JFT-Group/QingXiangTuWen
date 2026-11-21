@@ -15,7 +15,7 @@
 | P0-1 | 审核 / 分类管理 API 与页面缺失 | `/api/v1/reviews`、`/api/v1/categories/tree`、`/admin/reviews`、`/admin/categories` 实测 404；导航链接见 `common/b-sidebar.jspf:18,22`、`common/b-topbar.jspf:23`、`common/b-mobile-nav.jspf:35`、`article-detail.jsp:34` | B |
 | P0-2 | 无「通过 / 驳回」，新文章永远停在 PENDING | 状态机只有 submit/withdraw；审核者点「审核工作台」404 | B |
 | P0-3 | `sql/02_content.sql:47` 用中文句号结尾，建表 1064 | `cover_url ... COMMENT '...'。` → MySQL `ERROR 1064`，整个 B 表无法创建；本地已修复并提交 `1c52d5e` | B |
-| P0-4 | 安装文档与模块文档未更新 | `README.md:59` 仍只执行 `01_core` + `04_seed`，照做后 B 页面 500；`docs/` 无 `开发文档-成员B.md`；B 的接口章节未同步 | B（`接口文档.md` 需 A 合并） |
+| P0-4 | 安装与模块文档未更新 | README 已补全执行顺序；`docs/` 仍无 `开发文档-成员B.md`；B 的接口章节未同步 | B |
 | P0-5 | 头像上传成功但资料更新失败 | `POST /api/v1/files/avatar` 200；随后 `PUT /api/v1/me/avatar` 405（未实现）。`mine.js:18` 调用了 A 尚未交付的接口 | A 已补 `PUT /api/v1/me/profile`；`mine.js` 已改为调用它 |
 | P0-6 | `sql/02b_media.sql` 在新库重复加列 | 实测 `ERROR 1060 Duplicate column name 'media_type'` | B |
 
@@ -23,9 +23,9 @@
 
 | # | 问题 | 证据 | 归属 |
 |---|---|---|---|
-| P1-1 | 匿名写文章返回 403「页面已过期」而非契约的 401 | `SpringMvcConfig` 把 `/api/v1/articles/**` 排除出登录拦截器，CSRF 先命中；`curl` 实测 403 | B 引入 / A 改共享配置 |
+| P1-1 | 匿名写文章曾返回 403「页面已过期」而非契约的 401 | 已修正：`ApiWriteAuthInterceptor` 在 CSRF 之前拦 `/api/**` 非安全方法；curl 实测匿名 POST=401、公开 GET=200 | 已解决 |
 | P1-2 | 契约漂移 | `POST /articles` 文档要求分类必填，实现允许 null；新增 `mediaType/mediaUrls/coverUrl`、`POST /files/media` 未写入接口文档 | B |
-| P1-3 | `05_all_users_can_create.sql` 给 READER 创作权，但 `接口文档.md:89` 仍写「阅读者发文章 403」 | `/auth/me` 实测 reader 拥有 `article:*` | B + 组内拍板 |
+| P1-3 | 阅读者曾被授予创作权，与产品文档「阅读者不能创作」冲突 | 已修正：`05_creator_permissions.sql` 删除 READER 的文章权限并 +1 `session_version`；CREATOR/REVIEWER 保留创作能力；`/me` 文案按角色区分 | 已解决 |
 | P1-4 | 死代码与错误注释 | `ReviewAction`、`ReviewRequest`、`BatchReviewRequest`、`ArticleReview`、`selectReviewQueue/selectReviewLogs/adminDelete`、`NotificationService` 基本无调用；`ArticleService.java:31` 引用不存在的 `ReviewActionService` | B |
 | P1-5 | 分类软删除 + 唯一键 `(parent_id,name)` 导致名称不可复用 | `02_content.sql` 唯一键未包含 `deleted` | B |
 | P1-6 | 集成测试依赖本机开发库与种子数据 | `ArticleMapperIntegrationTest` 直接 `@SpringJUnitConfig(SpringConfig.class)` 连 `qingxiang` 库 | B |
@@ -78,7 +78,7 @@
 - [ ] 更新 `README.md` 安装顺序：`01_core → 02_content → 04_seed → 04_seed_b → 05`
 - [ ] `02b_media.sql` 改为幂等或删除
 - [ ] 修正 `ArticleService.java:31` 注释，清理 P1-4 死代码
-- [ ] 处理 P1-3（READER 创作权）与文档冲突，组内确认
+- [x] 处理 P1-3（READER 创作权）与文档冲突，组内确认
 - [x] 推送 `1c52d5e` SQL 修复
 - [x] `b-topbar.jspf:26` 头像链接 `/creator/mine` → `/me`
 - [x] `b-sidebar.jspf:27` 账号中心增加 `active == 'account'` 高亮
@@ -87,7 +87,7 @@
 
 - [x] 先合并 `feat/b-article`，再按 §4.4 改造 `/me`
 - [x] 补 `/api/v1/me/profile`（含头像）；`mine.js` 已改为调用它
-- [ ] 评估 `SpringMvcConfig` 的 article 登录排除，保证匿名写接口返回 401
+- [x] 评估 `SpringMvcConfig` 的 article 登录排除，保证匿名写接口返回 401
 - [ ] 复核 B 对 A 文件（`SpringMvcConfig`、`AuthPageController`、`me.jsp`、`register.jsp`、`PermissionCatalog`、`pom.xml`）的改动
 
 **合并前统一验证**
@@ -104,7 +104,7 @@ mysql --default-character-set=utf8mb4 < sql/01_core.sql
 mysql --default-character-set=utf8mb4 < sql/02_content.sql
 mysql --default-character-set=utf8mb4 < sql/04_seed.sql
 mysql --default-character-set=utf8mb4 < sql/04_seed_b.sql
-mysql --default-character-set=utf8mb4 < sql/05_all_users_can_create.sql
+mysql --default-character-set=utf8mb4 < sql/05_creator_permissions.sql
 
 # 测试
 mvn -B clean test

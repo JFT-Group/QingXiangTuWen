@@ -1,6 +1,6 @@
 -- ============================================================
 -- 轻享图文 · M1 模块 B（内容、分类与审核）建表
--- 执行顺序：01_core.sql -> 02_content.sql -> 04_seed.sql -> 04_seed_b.sql
+-- 执行顺序：01_core.sql -> 02_content.sql -> 04_seed.sql -> 04_seed_b.sql -> 05_creator_permissions.sql
 -- 本脚本只负责 category / article / article_review，不改 A 的表。
 -- ============================================================
 SET NAMES utf8mb4;
